@@ -1,7 +1,9 @@
 import Fastify from "fastify";
-import { OpenRouterService } from "./openrouterService.ts";
+import { buildGraph } from "./graph/graph.ts";
+import { HumanMessage } from "@langchain/core/messages";
 
-export const createServer = (routerService: OpenRouterService) => {
+const graph = buildGraph();
+export const createServer = () => {
   const app = Fastify({ logger: false });
 
   app.post(
@@ -20,8 +22,10 @@ export const createServer = (routerService: OpenRouterService) => {
     async (request, reply) => {
       try {
         const { question } = request.body as { question: string };
-        const response = await routerService.generate(question);
-        return reply.send(response);
+        const response = await graph.invoke({
+          messages: [new HumanMessage(question)],
+        });
+        return reply.send(response.output);
       } catch (error) {
         return reply
           .status(500)
