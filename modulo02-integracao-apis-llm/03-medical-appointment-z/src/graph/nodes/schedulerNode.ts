@@ -19,7 +19,7 @@ export function createSchedulerNode(appointmentService: AppointmentService) {
         const errorMessages = validation.error.issues
           .map((e) => e.message)
           .join(",");
-
+        console.log(`Validation Failed ${errorMessages}`);
         return {
           actionSuccess: false,
           actionError: errorMessages,
