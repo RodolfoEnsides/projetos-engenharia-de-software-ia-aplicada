@@ -1,8 +1,8 @@
 # Assistente de Agendamento Médico com LangGraph
 
-Template didático de uma API conversacional para **agendar e cancelar consultas médicas**. O projeto demonstra como representar um atendimento como um grafo: identificar a intenção do paciente, executar a operação adequada e gerar uma resposta final.
+Projeto didático de uma API conversacional para **agendar e cancelar consultas médicas** usando LangGraph, LangChain, OpenRouter e Fastify.
 
-> **Estado do projeto:** a estrutura do grafo, os prompts e o serviço em memória já existem, mas os nós principais ainda precisam ser conectados ao modelo de linguagem e ao `AppointmentService`. Portanto, este repositório é um exercício a ser completado, não uma aplicação finalizada.
+O objetivo deste item é praticar a integração entre uma API HTTP, um workflow com estado compartilhado, chamadas a LLM com saída estruturada e regras de negócio simples em memória. A aplicação recebe uma mensagem em linguagem natural, identifica a intenção do paciente, extrai os dados necessários, executa a ação correspondente e gera uma resposta final.
 
 ## Objetivo
 
@@ -11,12 +11,13 @@ A API deve receber mensagens como:
 - `Olá, sou Maria Santos e quero agendar com o Dr. Alicio amanhã às 16h para um check-up.`
 - `Cancele minha consulta com a Dra. Ana hoje às 14h. Meu nome é João da Silva.`
 
-A partir da mensagem, o fluxo deverá:
+A partir da mensagem, o fluxo:
 
-1. identificar se o paciente quer agendar, cancelar ou fez uma solicitação desconhecida;
-2. extrair paciente, profissional, data, horário e motivo;
-3. executar o agendamento ou cancelamento;
-4. produzir uma resposta clara e cordial no idioma do paciente.
+1. identifica se o paciente quer agendar, cancelar ou fez uma solicitação desconhecida;
+2. extrai dados como paciente, profissional, data, horário e motivo;
+3. valida os campos obrigatórios para a ação;
+4. agenda ou cancela a consulta usando o serviço em memória;
+5. gera uma mensagem final para o paciente.
 
 ## Fluxo do LangGraph
 
@@ -34,14 +35,15 @@ O estado compartilhado pelo grafo contém:
 - intenção: `schedule`, `cancel` ou `unknown`;
 - dados do paciente e do profissional;
 - data, horário e motivo da consulta;
-- resultado ou erro da operação.
+- resultado ou erro da operação;
+- dados do agendamento quando uma consulta é criada.
 
-### Responsabilidade dos nós
+## Responsabilidade dos Nós
 
-- `identifyIntent`: deve classificar a solicitação e extrair os dados usando saída estruturada com Zod.
-- `schedule`: deve verificar a disponibilidade e registrar uma consulta.
-- `cancel`: deve localizar e remover uma consulta existente.
-- `message`: deve transformar o resultado do fluxo em uma resposta amigável para o paciente.
+- `identifyIntent`: usa o modelo via OpenRouter para classificar a intenção e extrair dados estruturados com Zod.
+- `schedule`: valida `professionalId`, `datetime` e `patientName`, verifica disponibilidade e registra a consulta em memória.
+- `cancel`: valida os campos obrigatórios, procura a consulta existente e remove o agendamento.
+- `message`: usa o modelo para gerar a resposta final ao paciente e adiciona uma `AIMessage` ao estado.
 
 ## Componentes
 
@@ -49,52 +51,52 @@ O estado compartilhado pelo grafo contém:
 src/
   index.ts                         # Inicialização do servidor HTTP
   server.ts                        # Endpoint POST /chat
-  config.ts                        # Configuração planejada do OpenRouter
+  config.ts                        # Configuração do OpenRouter
   graph/
     graph.ts                       # Estado, nós e arestas do LangGraph
-    factory.ts                     # Exportação do grafo
+    factory.ts                     # Criação das dependências e exportação do grafo
     nodes/
-      identifyIntentNode.ts
-      schedulerNode.ts
-      cancellerNode.ts
-      messageGeneratorNode.ts
+      identifyIntentNode.ts        # Classificação da intenção com LLM
+      schedulerNode.ts             # Agendamento da consulta
+      cancellerNode.ts             # Cancelamento da consulta
+      messageGeneratorNode.ts      # Geração da resposta final
   prompts/v1/
     identifyIntent.ts              # Prompt e schema da classificação
     messageGenerator.ts            # Prompt e schema da resposta final
   services/
     appointmentService.ts          # Agenda em memória
+    oppenRouterService.ts          # Cliente de LLM via OpenRouter
 tests/
   router.e2e.test.ts               # Testes HTTP do fluxo
 ```
 
-O `AppointmentService` mantém profissionais e consultas em memória. Os dados são perdidos quando o processo é encerrado e não devem ser tratados como persistência de produção.
-
-## O que já está implementado
+## O Que Foi Implementado
 
 - servidor HTTP com Fastify;
-- endpoint `POST /chat` com validação básica;
-- estado e roteamento condicional do LangGraph;
-- schemas Zod e prompts para classificação e geração da resposta;
-- serviço em memória para consultar disponibilidade, agendar e cancelar;
-- configuração do LangGraph Studio;
-- testes E2E básicos do endpoint.
+- endpoint `POST /chat` com validação básica do campo `question`;
+- grafo com estado compartilhado e roteamento condicional;
+- integração com OpenRouter usando `ChatOpenAI`;
+- geração estruturada via `createAgent`, `providerStrategy` e schemas Zod;
+- identificação de intenção e extração de campos;
+- validação dos campos obrigatórios antes de agendar ou cancelar;
+- agendamento e cancelamento usando `AppointmentService` em memória;
+- geração de mensagem final com `AIMessage`;
+- configuração para LangGraph Studio;
+- testes E2E exercitando os fluxos via endpoint HTTP.
 
-## O que falta implementar
+## Observações Importantes
 
-- criar e configurar o cliente de LLM/OpenRouter;
-- usar `IntentSchema` no `identifyIntentNode` e atualizar o estado;
-- chamar `bookAppointment` no `schedulerNode`;
-- chamar `cancelAppointment` no `cancellerNode`;
-- usar `MessageSchema` no `messageGeneratorNode` e adicionar uma `AIMessage`;
-- validar campos obrigatórios antes de executar cada ação;
-- fortalecer os testes para verificar intenção, resultado e mensagens — atualmente eles validam principalmente o status HTTP;
-- substituir o armazenamento em memória caso seja necessária persistência real.
+O `AppointmentService` mantém profissionais e consultas em memória. Os dados são perdidos quando o processo é encerrado.
+
+A API atualmente devolve o estado completo do grafo. Isso ajuda durante o estudo porque permite visualizar `intent`, `patientName`, `professionalId`, `actionSuccess`, `appointmentData`, `messages` e possíveis erros. Em uma aplicação de produção, normalmente a resposta HTTP seria reduzida para uma estrutura mais controlada.
+
+Alguns schemas usam Zod v4, enquanto o estado do LangGraph usa `zod/v3` por compatibilidade com `withLangGraph`. Evite misturar versões no mesmo contrato de tipos quando um método espera explicitamente uma delas.
 
 ## Pré-requisitos
 
 - Node.js `>= 24.10.0`;
 - npm;
-- chave do OpenRouter para implementar/executar as chamadas ao modelo;
+- chave do OpenRouter;
 - chave do LangSmith apenas se o tracing for utilizado.
 
 ## Configuração
@@ -122,8 +124,6 @@ LANGCHAIN_TRACING_V2=true
 LANGCHAIN_PROJECT=03-medical-appointment
 ```
 
-Configurar as chaves, por si só, ainda não completa o projeto: os nós precisam usar o cliente de LLM e o serviço de consultas.
-
 ## Executando
 
 Inicie a API:
@@ -132,7 +132,7 @@ Inicie a API:
 npm start
 ```
 
-Durante o desenvolvimento, com reinicialização automática:
+Durante o desenvolvimento, com reinicialização automática e debugger:
 
 ```bash
 npm run dev
@@ -148,7 +148,7 @@ curl -X POST http://localhost:3000/chat \
   -d '{"question":"Olá, sou Maria Santos e quero agendar com o Dr. Alicio amanhã às 16h para um check-up."}'
 ```
 
-O campo `question` é obrigatório e deve conter pelo menos 10 caracteres. No estado atual, a API devolve o estado completo do grafo.
+O campo `question` é obrigatório e deve conter pelo menos 10 caracteres.
 
 ## LangGraph Studio
 
@@ -174,14 +174,29 @@ Ou somente os testes E2E:
 npm run test:e2e
 ```
 
-Os cenários existentes exercitam solicitações de agendamento e cancelamento por meio do endpoint HTTP. As asserções funcionais estão pendentes até a implementação completa dos nós.
+Durante o desenvolvimento dos testes E2E:
 
-## Conceitos praticados
+```bash
+npm run test:e2e:dev
+```
 
-- modelagem de workflows com LangGraph;
-- estado compartilhado entre nós;
-- roteamento com arestas condicionais;
-- classificação de intenção com LLM;
-- saída estruturada e validada com Zod;
-- separação entre API, orquestração, prompts e regras de negócio;
-- testes E2E de uma aplicação baseada em IA.
+Os testes chamam o endpoint `/chat` com mensagens de agendamento e cancelamento. Como existe chamada real ao modelo, os resultados podem variar conforme o modelo escolhido, disponibilidade do provedor e qualidade da extração estruturada.
+
+## Conceitos Praticados
+
+- criação de workflows com LangGraph;
+- passagem de estado entre nós;
+- roteamento condicional;
+- integração com LLM via OpenRouter;
+- saída estruturada com Zod;
+- validação de dados antes de executar regras de negócio;
+- separação entre API, grafo, prompts, serviços e testes;
+- testes E2E em uma aplicação baseada em IA.
+
+## Próximos Passos Possíveis
+
+- padronizar o uso de Zod em todo o fluxo para evitar incompatibilidades de tipos;
+- fortalecer as asserções dos testes para validar `patientName`, `actionSuccess`, `appointmentData` e mensagens finais;
+- melhorar os prompts com exemplos contendo todos os campos esperados;
+- persistir os agendamentos em banco de dados;
+- retornar uma resposta HTTP mais enxuta para consumo por frontend ou aplicações externas.
