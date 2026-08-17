@@ -8,8 +8,7 @@ import { OpenRouterService } from "../../services/oppenRouterService.ts";
 import type { GraphState } from "../graph.ts";
 
 export function createIdentifyIntentNode(llmCLient: OpenRouterService) {
-  return async (state: GraphState): Promise<GraphState> => {
-    console.log(`🔍 Identifying intent...`);
+  return async (state: GraphState): Promise<Partial<GraphState>> => {
     const input = state.messages.at(-1)!.text;
 
     try {
@@ -20,9 +19,17 @@ export function createIdentifyIntentNode(llmCLient: OpenRouterService) {
         userPrompt,
         IntentSchema,
       );
-      1;
+      if (!result.success) {
+        console.error(`Intent identification failed ${result.error}`);
+        return {
+          intent: "unknown",
+          error: result.error,
+        };
+      }
+      const intentData = result.data!;
+      console.log(`Intent Identified: ${intentData}`);
       return {
-        ...state,
+        ...intentData,
       };
     } catch (error) {
       console.error("❌ Error in identifyIntent node:", error);
