@@ -1,8 +1,8 @@
-import { ChatOpenAI } from '@langchain/openai';
-import { config, type ModelConfig } from '../config.ts';
-import { SystemMessage, HumanMessage } from '@langchain/core/messages';
-import type { z } from 'zod/v3';
-import { createAgent, providerStrategy } from 'langchain';
+import { ChatOpenAI } from "@langchain/openai";
+import { config, type ModelConfig } from "../config.ts";
+import { SystemMessage, HumanMessage } from "@langchain/core/messages";
+import type { z } from "zod/v3";
+import { createAgent, providerStrategy } from "langchain";
 
 export type LLMResponse = {
   model: string;
@@ -21,10 +21,10 @@ export class OpenRouterService {
       modelName: this.config.models[0],
       temperature: this.config.temperature,
       configuration: {
-        baseURL: 'https://openrouter.ai/api/v1',
+        baseURL: "https://openrouter.ai/api/v1",
         defaultHeaders: {
-          'HTTP-Referer': this.config.httpReferer,
-          'X-Title': this.config.xTitle,
+          "HTTP-Referer": this.config.httpReferer,
+          "X-Title": this.config.xTitle,
         },
       },
 
@@ -36,8 +36,8 @@ export class OpenRouterService {
   }
 
   async generateStructured<T>(
-    userPrompt: string,
     systemPrompt: string,
+    userPrompt: string,
     schema: z.ZodSchema<T>,
   ) {
     try {
@@ -58,12 +58,11 @@ export class OpenRouterService {
         success: true,
         data: data.structuredResponse as T,
       };
-
     } catch (error) {
-      console.error('🔴 LLM Error:', error);
+      console.error("🔴 LLM Error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
