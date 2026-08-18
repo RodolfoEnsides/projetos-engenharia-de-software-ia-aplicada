@@ -16,7 +16,7 @@ async function makeARequest(question: string) {
 }
 
 describe("Medical Appointment System - E2E Tests", async () => {
-  it.skip("Schedule appointment - Success", async () => {
+  it("Schedule appointment - Success", async () => {
     const response = await makeARequest(
       `Olá, sou Maria Santos e quero agendar uma consulta com ${professionals.at(0)?.name} para amanhã às 16h para um check-up regular`,
     );

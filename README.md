@@ -14,12 +14,12 @@ modulo02-integracao-apis-llm/
   03-medical-appointment-z/
 ```
 
-| Item | Projeto | Objetivo |
-| --- | --- | --- |
-| 01 | [Smart Model Router Gateway](./modulo02-integracao-apis-llm/01-smart-model-router-gateway) | Criar uma API intermediária para chamadas a LLMs usando OpenRouter e roteamento de modelos. |
-| 02 | [LangChain Intro com LangGraph](./modulo02-integracao-apis-llm/02-langchain-intro) | Introduzir LangGraph com estado compartilhado, nós, arestas e roteamento condicional. |
-| 03 | [Medical Appointment Template](./modulo02-integracao-apis-llm/03-medical-appointment-template) | Disponibilizar o template didático do assistente de agendamento médico. |
-| 03 | [Medical Appointment Z](./modulo02-integracao-apis-llm/03-medical-appointment-z) | Implementar o assistente de agendamento médico com LangGraph, OpenRouter, Zod, Fastify e testes E2E. |
+| Item | Projeto                                                                                        | Objetivo                                                                                             |
+| ---- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 01   | [Smart Model Router Gateway](./modulo02-integracao-apis-llm/01-smart-model-router-gateway)     | Criar uma API intermediária para chamadas a LLMs usando OpenRouter e roteamento de modelos.          |
+| 02   | [LangChain Intro com LangGraph](./modulo02-integracao-apis-llm/02-langchain-intro)             | Introduzir LangGraph com estado compartilhado, nós, arestas e roteamento condicional.                |
+| 03   | [Medical Appointment Template](./modulo02-integracao-apis-llm/03-medical-appointment-template) | Disponibilizar o template didático do assistente de agendamento médico.                              |
+| 03   | [Medical Appointment Z](./modulo02-integracao-apis-llm/03-medical-appointment-z)               | Implementar o assistente de agendamento médico com LangGraph, OpenRouter, Zod, Fastify e testes E2E. |
 
 ## Como usar um projeto
 
