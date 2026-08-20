@@ -151,7 +151,7 @@ Apenas configurar as chaves não completa o projeto: os nós e os mecanismos de 
 Os scripts existentes iniciam o chat com usuários fixos. O mesmo identificador deve recuperar as preferências daquele usuário:
 
 ```bash
-npm run chat:erickwendel
+npm run chat:rodolfo
 npm run chat:ana
 ```
 
