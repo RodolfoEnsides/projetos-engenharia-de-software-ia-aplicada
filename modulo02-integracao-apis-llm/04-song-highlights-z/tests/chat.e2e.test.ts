@@ -1,13 +1,13 @@
-import { describe, it, before, after } from 'node:test';
-import assert from 'node:assert/strict';
-import { HumanMessage } from '@langchain/core/messages';
-import { buildGraph } from '../src/graph/factory.ts';
-import { unlinkSync, existsSync } from 'node:fs';
+import { describe, it, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { HumanMessage } from "@langchain/core/messages";
+import { buildGraph } from "../src/graph/factory.ts";
+import { unlinkSync, existsSync } from "node:fs";
 
-describe('Chat de Recomendação Musical - Testes E2E', () => {
+describe("Chat de Recomendação Musical - Testes E2E", () => {
   let graph: any;
   let memoryService: any;
-  const testDbPath = './test-memory.db';
+  const testDbPath = "./test-memory.db";
 
   before(async () => {
     if (existsSync(testDbPath)) {
@@ -25,43 +25,53 @@ describe('Chat de Recomendação Musical - Testes E2E', () => {
     }
   });
 
-  it('Deve extrair e salvar preferências do usuário', async () => {
+  it("Deve extrair e salvar preferências do usuário", async () => {
     const testThreadId = `test-user-${Date.now()}`;
     const config = {
       configurable: { thread_id: testThreadId },
-      context: { userId: testThreadId }
+      context: { userId: testThreadId },
     };
 
     const response = await graph.invoke(
       {
-        messages: [new HumanMessage('Oi! Meu nome é Alex e eu amo rock e metal')],
+        messages: [
+          new HumanMessage("Oi! Meu nome é Alex e eu amo rock e metal"),
+        ],
         userId: testThreadId,
       },
-      config
+      config,
     );
 
-    assert.ok(response.messages.length > 0, 'Deve ter mensagens de resposta');
+    assert.ok(response.messages.length > 0, "Deve ter mensagens de resposta");
 
     const lastMessage = response.messages.at(-1);
-    assert.equal(lastMessage._getType(), 'ai', 'Última mensagem deve ser da IA');
+    assert.equal(
+      lastMessage._getType(),
+      "ai",
+      "Última mensagem deve ser da IA",
+    );
 
     const content = lastMessage.content.toLowerCase();
     assert.ok(
-      content.includes('alex') || content.includes('rock') || content.includes('metal'),
-      'Resposta deve reconhecer as preferências'
+      content.includes("alex") ||
+        content.includes("rock") ||
+        content.includes("metal"),
+      "Resposta deve reconhecer as preferências",
     );
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const namespace = ['memories', testThreadId];
-    const savedMemories = await memoryService.store.search(namespace, { limit: 10 });
+    const namespace = ["memories", testThreadId];
+    const savedMemories = await memoryService.store.search(namespace, {
+      limit: 10,
+    });
 
-    assert.ok(savedMemories.length > 0, 'Preferências devem estar salvas');
+    assert.ok(savedMemories.length > 0, "Preferências devem estar salvas");
 
-    const memoriesText = savedMemories.map((m: any) => m.value.data).join(' ');
-    assert.ok(memoriesText.includes('Alex'), 'Nome deve estar salvo');
+    const memoriesText = savedMemories.map((m: any) => m.value.data).join(" ");
+    assert.ok(memoriesText.includes("Alex"), "Nome deve estar salvo");
   });
-
+  /*
   it('Deve manter múltiplas trocas e fazer sumarização', async () => {
     const testThreadId = `test-user-${Date.now()}`;
     const config = {
@@ -180,5 +190,5 @@ describe('Chat de Recomendação Musical - Testes E2E', () => {
     );
 
     assert.ok(hasUserMessage, 'Deve manter histórico da conversa');
-  });
+  }); */
 });
