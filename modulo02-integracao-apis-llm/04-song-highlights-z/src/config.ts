@@ -16,6 +16,8 @@ export type ModelConfig = {
   memory: {
     dbUri: string;
   };
+
+  maxMessageToSummary: number;
 };
 
 console.assert(
@@ -43,4 +45,5 @@ export const config: ModelConfig = {
     dbUri:
       "postgresql://postgres:mysecretpassword@localhost:5432/song_recommender",
   },
+  maxMessageToSummary: 6,
 };
